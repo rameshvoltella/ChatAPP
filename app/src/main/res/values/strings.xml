@@ -1,0 +1,38 @@
+<resources>
+    <string name="app_name">ChatAPP</string>
+    <string name="action_settings">Settings</string>
+    <string name="btn_activity_back">Back</string>
+
+    <string name="hello_world">Welcome</string>
+    <string name="btn_login">Sign in</string>
+    <string name="btn_register">Sign up</string>
+
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="et_user_name_hint">username</string>
+    <string name="et_password_hint">password</string>
+    <string name="tv_warning_message_username_invalid">username invalid</string>
+    <string name="tv_warning_message_password_invalid">password invalid</string>
+    <string name="tv_warning_message_connect_error">connection error</string>
+    <string name="tv_warning_message_login_invalid">invalid sign in</string>
+    <string name="tv_warning_message_connect_ok_sign_in_error">connection ok,sign in error</string>
+    <string name="pd_title"></string>
+    <string name="pd_loading">Loading</string>
+    <string name="xmpp_connection_not_initial">XMPPConnection not initial</string>
+    <string name="chat_manager_not_initial">chat manager not initial</string>
+
+    <string name="title_activity_home">HomeActivity</string>
+    <string name="tv_list_chat">recent chat list</string>
+    <string name="tv_activity_title_history">Recently</string>
+    <string name="tv_activity_title_roster">Buddies</string>
+    <string name="tv_activity_title_account">Account Information</string>
+
+    <string name="title_activity_chat">Chat with %s</string>
+    <string name="btn_send">Send</string>
+    <string name="tv_list_friend">Buddy List</string>
+    <string name="btn_account_management">Account</string>
+    <string name="tv_account_name">Username: %s</string>
+    <string name="tv_account_pwd">Reset password</string>
+    <string name="btn_account_logout">Logout</string>
+
+
+</resources>
