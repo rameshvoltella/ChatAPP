@@ -22,6 +22,7 @@ import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.roster.RosterListener;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
+import org.jivesoftware.smackx.filetransfer.FileTransferManager;
 import org.jivesoftware.smackx.iqregister.AccountManager;
 
 import java.io.IOException;
@@ -49,9 +50,11 @@ public class ChatService {
     private Roster roster;
     private AccountManager accountManager;
 
+
     private Context context;
 
     private static ChatService chatService;
+    FileTransferManager fileTransferManager;
 
     private ChatService(Context ctx) {
 
@@ -188,6 +191,10 @@ public class ChatService {
         } catch (SmackException.NotConnectedException e) {
             e.printStackTrace();
         }
+    }
+
+    public void sendImage(String toJid, String filePath) {
+
     }
 
     public List<RosterEntry> getRosterEntries() {

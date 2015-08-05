@@ -44,12 +44,6 @@ public class RosterItemFragment extends Fragment implements AbsListView.OnItemCl
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        mAdapter = new RosterListAdapter(getActivity());
-
-        if (null != mListener) {
-            mListener.loadRoster();
-        }
     }
 
     @Override
@@ -57,17 +51,28 @@ public class RosterItemFragment extends Fragment implements AbsListView.OnItemCl
         View view = inflater.inflate(R.layout.fragment_item_list, container, false);
 
         mListView = (ListView) view.findViewById(android.R.id.list);
-
+        mAdapter = new RosterListAdapter(getActivity());
         mListView.setAdapter(mAdapter);
         mListView.setOnItemClickListener(this);
 
         return view;
     }
 
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        if (null != mListener) {
+            mListener.loadRoster();
+        }
+    }
+
     public void addEntries(List<RosterEntry> entryList) {
         entries.addAll(entryList);
         mAdapter.notifyDataSetChanged();
     }
+
+
 
     @Override
     public void onAttach(Activity activity) {

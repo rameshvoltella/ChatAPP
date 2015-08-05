@@ -8,7 +8,7 @@
 
     <string name="et_user_name_hint">用户名</string>
     <string name="et_password_hint">密码</string>
-    <string name="pd_loading">登录中...</string>
+    <string name="pd_loading">登录中&#8230;</string>
     <string name="pd_title">提示</string>
     <string name="tv_warning_message_username_invalid">用户名不能为空</string>
     <string name="tv_warning_message_password_invalid">密码不能为空</string>
@@ -22,11 +22,18 @@
     <string name="tv_activity_title_roster">好友</string>
     <string name="tv_activity_title_account">个人信息</string>
 
-    <string name="title_activity_chat">与%s对话</string>
-    <string name="btn_send">发送</string>
-    <string name="btn_activity_back">返回</string>
     <string name="tv_account_name">用户名: %s</string>
     <string name="tv_account_pwd">重置密码</string>
     <string name="btn_account_logout">注销当前帐号</string>
+
+    <string name="title_activity_chat">与%s对话</string>
+    <string name="btn_send">发送</string>
+    <string name="action_image">图片</string>
+    <string name="action_select_image">选择图片</string>
+    <string name="btn_activity_back">返回</string>
+
+
+
+
 
 </resources>

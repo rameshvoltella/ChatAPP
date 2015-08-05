@@ -24,15 +24,17 @@
     <string name="tv_list_chat">recent chat list</string>
     <string name="tv_activity_title_history">Recently</string>
     <string name="tv_activity_title_roster">Buddies</string>
-    <string name="tv_activity_title_account">Account Information</string>
-
-    <string name="title_activity_chat">Chat with %s</string>
-    <string name="btn_send">Send</string>
     <string name="tv_list_friend">Buddy List</string>
+    <string name="tv_activity_title_account">Account Information</string>
     <string name="btn_account_management">Account</string>
     <string name="tv_account_name">Username: %s</string>
     <string name="tv_account_pwd">Reset password</string>
     <string name="btn_account_logout">Logout</string>
+
+    <string name="title_activity_chat">Chat with %s</string>
+    <string name="btn_send">Send</string>
+    <string name="action_image">Image</string>
+    <string name="action_select_image">Select Image</string>
 
 
 </resources>
