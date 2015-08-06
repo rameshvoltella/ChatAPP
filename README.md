@@ -5,4 +5,4 @@ A simple chat client  based on XMPP protocol for android
 
 已经初步完成了互相传图功能了，用的是FileTransferManager来实现的。(2015-08-06)
 
-<b>注意:gradle.properties 文件中的代理是编译的时候代理服务器(也就是翻墙)用来下载相关包的</b>
+<b>注意:gradle.properties 文件中的代理是编译的时候代理服务器(也就是翻墙)用来下载相关包的</b>(2015-08-06)
