@@ -35,6 +35,8 @@ import net.pingfang.xmpp.service.ChatService;
 import net.pingfang.xmpp.util.GlobalApplication;
 import net.pingfang.xmpp.util.MediaFileUtils;
 
+import java.io.File;
+
 public class ChatActivity extends FragmentActivity implements View.OnClickListener{
 
     public static final int REQUEST_IMAGE_GET = 0x01;
@@ -111,6 +113,7 @@ public class ChatActivity extends FragmentActivity implements View.OnClickListen
         receiver = new MessageReceiver();
         IntentFilter filter = new IntentFilter();
         filter.addAction(GlobalApplication.ACTION_INTENT_MESSAGE_INCOMING);
+        filter.addAction(GlobalApplication.ACTION_INTENT_IMAGE_INCOMING);
         registerReceiver(receiver, filter);
     }
 
@@ -143,6 +146,16 @@ public class ChatActivity extends FragmentActivity implements View.OnClickListen
                 } else {
 
                 }
+            } else if(action.equals(GlobalApplication.ACTION_INTENT_IMAGE_INCOMING)) {
+                String nameFrom= intent.getStringExtra("name");
+                String path = intent.getStringExtra("path");
+                String file = intent.getStringExtra("file");
+
+                File tmpFile = new File(path,file);
+                Uri uri = Uri.fromFile(tmpFile);
+                Bitmap bitmap = MediaFileUtils.decodeBitmapFromPath(tmpFile.toString(), 250, 250);
+                inflaterImgMessage(bitmap,uri,false,nameFrom);
+
             }
         }
     }
@@ -156,7 +169,6 @@ public class ChatActivity extends FragmentActivity implements View.OnClickListen
                 break;
             case R.id.btn_send:
                 sendMessage();
-
                 break;
         }
     }
@@ -166,7 +178,7 @@ public class ChatActivity extends FragmentActivity implements View.OnClickListen
             chatService.sendMessage(jid,et_message.getText().toString().trim());
             TextView textView = new TextView(getApplicationContext());
             textView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            textView.setText(name + "\n" + et_message.getText().toString().trim());
+            textView.setText(chatService.getAccountAttribute("name") + "\n" + et_message.getText().toString().trim());
             textView.setTextColor(Color.RED);
             textView.setGravity(Gravity.LEFT);
             ll_message_container.addView(textView);
@@ -210,17 +222,28 @@ public class ChatActivity extends FragmentActivity implements View.OnClickListen
         }
     }
 
-    private void inflaterImgMessage(Bitmap bitmap,Uri uri) {
+    private void inflaterImgMessage(Bitmap bitmap,Uri uri,boolean direction,String from) {
         TextView textView = new TextView(getApplicationContext());
         textView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        textView.setText(name + "\n" + et_message.getText().toString().trim());
-        textView.setTextColor(Color.RED);
-        textView.setGravity(Gravity.LEFT);
+        if(direction) {
+            textView.setText(from + "\n");
+            textView.setTextColor(Color.RED);
+            textView.setGravity(Gravity.LEFT);
+        } else {
+            textView.setText(name + "\n");
+            textView.setTextColor(Color.BLACK);
+            textView.setGravity(Gravity.RIGHT);
+        }
         ll_message_container.addView(textView);
 
         ImageView imageView = new ImageView(getApplicationContext());
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(250,250);
-        params.setMargins(10,0,0,0);
+        if(direction) {
+            params.gravity = Gravity.LEFT;
+        } else {
+            params.gravity = Gravity.RIGHT;
+        }
+
         imageView.setLayoutParams(params);
         imageView.setImageBitmap(bitmap);
         imageView.setTag(uri);
@@ -231,7 +254,7 @@ public class ChatActivity extends FragmentActivity implements View.OnClickListen
                 Intent intent = new Intent();
                 intent.setAction(Intent.ACTION_VIEW);
                 intent.setData(uri);
-                intent.setDataAndType(uri,"image/*");
+                intent.setDataAndType(uri, "image/*");
                 if (intent.resolveActivity(getPackageManager()) != null) {
                     startActivity(intent);
                 }
@@ -249,7 +272,9 @@ public class ChatActivity extends FragmentActivity implements View.OnClickListen
                     if(uri != null) {
                         String filePath = MediaFileUtils.getRealPathFromURI(getApplicationContext(),uri);
                         Bitmap bitmap = MediaFileUtils.decodeBitmapFromPath(filePath,250,250);
-                        inflaterImgMessage(bitmap,uri);
+                        inflaterImgMessage(bitmap,uri,true,chatService.getAccountAttribute("name"));
+
+                        chatService.sendImage(jid,filePath);
                     } else {
                         Log.d("ChatActivity","no data");
                     }

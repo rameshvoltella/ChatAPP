@@ -2,10 +2,13 @@ package net.pingfang.xmpp.service;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.text.TextUtils;
+import android.util.Log;
 
 import net.pingfang.xmpp.R;
 import net.pingfang.xmpp.util.GlobalApplication;
+import net.pingfang.xmpp.util.MediaFileUtils;
 import net.pingfang.xmpp.util.StringUtilsCompat;
 
 import org.jivesoftware.smack.ConnectionConfiguration;
@@ -22,9 +25,15 @@ import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.roster.RosterListener;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
+import org.jivesoftware.smackx.filetransfer.FileTransfer;
+import org.jivesoftware.smackx.filetransfer.FileTransferListener;
 import org.jivesoftware.smackx.filetransfer.FileTransferManager;
+import org.jivesoftware.smackx.filetransfer.FileTransferRequest;
+import org.jivesoftware.smackx.filetransfer.IncomingFileTransfer;
+import org.jivesoftware.smackx.filetransfer.OutgoingFileTransfer;
 import org.jivesoftware.smackx.iqregister.AccountManager;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,6 +51,8 @@ public class ChatService {
     public static final int CONNECT_TIME_OUT = 20000;
     public static final String RESOURCE = "Smack";
 
+    public static final long MAX_SIZE = 15 * 1024 * 1024;
+
     private XMPPTCPConnectionConfiguration connectionConfig;
     private XMPPTCPConnection connection;
     private ChatManager chatManager;
@@ -49,12 +60,12 @@ public class ChatService {
     private ChatManagerListener chatManagerListener;
     private Roster roster;
     private AccountManager accountManager;
+    private FileTransferManager fileTransferManager;
 
 
     private Context context;
 
     private static ChatService chatService;
-    FileTransferManager fileTransferManager;
 
     private ChatService(Context ctx) {
 
@@ -136,6 +147,27 @@ public class ChatService {
 
             }
         });
+
+        fileTransferManager = FileTransferManager.getInstanceFor(connection);
+        fileTransferManager.addFileTransferListener(new FileTransferListener() {
+            @Override
+            public void fileTransferRequest(FileTransferRequest request) {
+                String fileName = request.getFileName();
+                String mimeType = request.getMimeType();
+                long fileSize = request.getFileSize();
+                String requestor = request.getRequestor();
+
+                if(fileSize > 0 && fileSize < MAX_SIZE) {
+                    new IncomingFileTransferAsyncTask(request).execute(fileName,mimeType,requestor);
+                } else {
+                    try {
+                        request.reject();
+                    } catch (SmackException.NotConnectedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
     }
 
     public Integer login(String username,String password) {
@@ -194,7 +226,7 @@ public class ChatService {
     }
 
     public void sendImage(String toJid, String filePath) {
-
+        new OutgoingFileTransferAsyncTask().execute(toJid, filePath);
     }
 
     public List<RosterEntry> getRosterEntries() {
@@ -240,6 +272,131 @@ public class ChatService {
                 initConnection();
             }
 
+        }
+    }
+
+    private class IncomingFileTransferAsyncTask extends AsyncTask<String,String,String> {
+
+        FileTransferRequest request;
+
+        public IncomingFileTransferAsyncTask(FileTransferRequest request) {
+            this.request = request;
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            IncomingFileTransfer incomingFileTransfer = request.accept();
+            if(MediaFileUtils.isExternalStorageWritable()) {
+                File path = MediaFileUtils.getAlbumStorageDir(context,"ChatApp");
+                try {
+                    incomingFileTransfer.recieveFile(new File(path,params[0]));
+                    while(!incomingFileTransfer.isDone()) {
+                        if(incomingFileTransfer.getStatus().equals(FileTransfer.Status.error)) {
+                            System.out.println("incomingFileTransfer " + incomingFileTransfer.getError());
+                        } else {
+                            if(incomingFileTransfer.getStatus().equals(FileTransfer.Status.in_progress)) {
+                                publishProgress(incomingFileTransfer.getProgress() * 100 + "%");
+                            } else if(incomingFileTransfer.getStatus().equals(FileTransfer.Status.refused)){
+                                publishProgress("incomingFileTransfer refused");
+                                break;
+                            } else if(incomingFileTransfer.getStatus().equals(FileTransfer.Status.cancelled)) {
+                                publishProgress("incomingFileTransfer cancelled");
+                                break;
+                            } else {
+                                publishProgress(incomingFileTransfer.getStatus().toString());
+                            }
+                        }
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                            break;
+                        }
+                    }
+                    if(incomingFileTransfer.isDone()) {
+                        return "incomingFileTransfer finish";
+                    } else {
+                        return "incomingFileTransfer stop";
+                    }
+                } catch (SmackException e) {
+                    e.printStackTrace();
+                    return "incomingFileTransfer error";
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return "file io  error";
+                }
+            } else {
+                return "ExternalStorage unavailable";
+            }
+
+        }
+
+        @Override
+        protected void onProgressUpdate(String... values) {
+            Log.d("IncomingFileTransfer",values[0]);
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            Log.d("IncomingFileTransfer",s);
+            if("incomingFileTransfer finish".equals(s)) {
+                Intent intent = new Intent();
+                intent.setAction(GlobalApplication.ACTION_INTENT_IMAGE_INCOMING);
+                intent.putExtra("name", StringUtilsCompat.parseName(request.getRequestor()));
+                intent.putExtra("jid", StringUtilsCompat.parseBareAddress(request.getRequestor()));
+                intent.putExtra("path",MediaFileUtils.getAlbumStorageDir(context, "ChatApp").getPath());
+                intent.putExtra("file",request.getFileName());
+                context.sendBroadcast(intent);
+            }
+        }
+    }
+
+    private class OutgoingFileTransferAsyncTask extends AsyncTask<String,String,String> {
+
+        OutgoingFileTransfer outgoingFileTransfer;
+
+        @Override
+        protected void onProgressUpdate(String... values) {
+            Log.d("OutgoingFileTransfer",values[0]);
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            outgoingFileTransfer = fileTransferManager.createOutgoingFileTransfer(params[0] + "/" + RESOURCE);
+            try {
+                outgoingFileTransfer.sendFile(new File(params[1]), "You won't believe this!");
+                while(!outgoingFileTransfer.isDone()) {
+                    if(outgoingFileTransfer.getStatus().equals(FileTransfer.Status.error)) {
+                        System.out.println("outgoingFileTransfer " + outgoingFileTransfer.getError());
+                    } else {
+                        if(outgoingFileTransfer.getStatus().equals(FileTransfer.Status.in_progress)) {
+                            publishProgress(outgoingFileTransfer.getProgress() * 100 + "%");
+                        } else if(outgoingFileTransfer.getStatus().equals(FileTransfer.Status.refused)){
+                            publishProgress("outgoingFileTransfer refused");
+                            break;
+                        } else if(outgoingFileTransfer.getStatus().equals(FileTransfer.Status.cancelled)) {
+                            publishProgress("outgoingFileTransfer cancelled");
+                            break;
+                        } else {
+                            publishProgress(outgoingFileTransfer.getStatus().toString());
+                        }
+                    }
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        break;
+                    }
+                }
+                if(outgoingFileTransfer.isDone()) {
+                    return "outgoingFileTransfer finish";
+                } else {
+                    return "outgoingFileTransfer stop";
+                }
+            } catch (SmackException e) {
+                e.printStackTrace();
+                return "outgoingFileTransfer error";
+            }
         }
     }
 }

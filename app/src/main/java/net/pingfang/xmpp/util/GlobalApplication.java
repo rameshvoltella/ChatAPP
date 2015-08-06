@@ -12,6 +12,7 @@ import java.util.Locale;
 public class GlobalApplication extends Application {
 
     public static final String ACTION_INTENT_MESSAGE_INCOMING = "ACTION_INTENT_MESSAGE_INCOMING";
+    public static final String ACTION_INTENT_IMAGE_INCOMING = "ACTION_INTENT_IMAGE_INCOMING";
 
     private Locale myLocale;
     SharedPreferencesHelper helper;
