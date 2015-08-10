@@ -35,6 +35,9 @@
     <string name="btn_send">Send</string>
     <string name="action_image">Image</string>
     <string name="action_select_image">Select Image</string>
+    <string name="action_voice">Voice</string>
+    <string name="btn_voice_record">Hold and Speak loudly</string>
+    <string name="btn_voice_record_up">Release and Send voice </string>
 
 
 </resources>

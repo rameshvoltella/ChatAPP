@@ -3,6 +3,7 @@ package net.pingfang.xmpp.service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -226,7 +227,11 @@ public class ChatService {
     }
 
     public void sendImage(String toJid, String filePath) {
-        new OutgoingFileTransferAsyncTask().execute(toJid, filePath);
+        new OutgoingFileTransferAsyncTask().execute(toJid, filePath, "IMAGE");
+    }
+
+    public void sendVoice(String toJid, String filePath) {
+        new OutgoingFileTransferAsyncTask().execute(toJid, filePath, "VOICE");
     }
 
     public List<RosterEntry> getRosterEntries() {
@@ -278,16 +283,27 @@ public class ChatService {
     private class IncomingFileTransferAsyncTask extends AsyncTask<String,String,String> {
 
         FileTransferRequest request;
+        String type;
 
         public IncomingFileTransferAsyncTask(FileTransferRequest request) {
             this.request = request;
+//            String mime = request.getMimeType();
+            String description = request.getDescription();
+            type = Environment.DIRECTORY_DOCUMENTS;
+            if(description.equals("IMAGE")) {
+                type = Environment.DIRECTORY_PICTURES;
+            } else if(description.equals("VOICE")) {
+                type = Environment.DIRECTORY_MUSIC;
+            } else if(description.equals("VIDEO")) {
+                type = Environment.DIRECTORY_MOVIES;
+            }
         }
 
         @Override
         protected String doInBackground(String... params) {
             IncomingFileTransfer incomingFileTransfer = request.accept();
             if(MediaFileUtils.isExternalStorageWritable()) {
-                File path = MediaFileUtils.getAlbumStorageDir(context,"ChatApp");
+                File path = MediaFileUtils.getAlbumStorageDir(context,type,"ChatApp");
                 try {
                     incomingFileTransfer.recieveFile(new File(path,params[0]));
                     while(!incomingFileTransfer.isDone()) {
@@ -341,10 +357,21 @@ public class ChatService {
             Log.d("IncomingFileTransfer",s);
             if("incomingFileTransfer finish".equals(s)) {
                 Intent intent = new Intent();
-                intent.setAction(GlobalApplication.ACTION_INTENT_IMAGE_INCOMING);
+                if(type.equals(Environment.DIRECTORY_PICTURES)) {
+                    intent.setAction(GlobalApplication.ACTION_INTENT_IMAGE_INCOMING);
+                    Log.d("IncomingFileTransfer","TYPE == " + "Environment.DIRECTORY_PICTURES");
+                } else if(type.equals(Environment.DIRECTORY_MUSIC)){
+                    intent.setAction(GlobalApplication.ACTION_INTENT_VOICE_INCOMING);
+                    Log.d("IncomingFileTransfer", "TYPE == " + "Environment.DIRECTORY_MUSIC");
+                } else if(type.equals(Environment.DIRECTORY_MOVIES)) {
+                    intent.setAction(GlobalApplication.ACTION_INTENT_VIDEO_INCOMING);
+                    Log.d("IncomingFileTransfer", "TYPE == " + "Environment.DIRECTORY_MOVIES");
+                } else {
+                    return;
+                }
                 intent.putExtra("name", StringUtilsCompat.parseName(request.getRequestor()));
                 intent.putExtra("jid", StringUtilsCompat.parseBareAddress(request.getRequestor()));
-                intent.putExtra("path",MediaFileUtils.getAlbumStorageDir(context, "ChatApp").getPath());
+                intent.putExtra("path",MediaFileUtils.getAlbumStorageDir(context, type,"ChatApp").getPath());
                 intent.putExtra("file",request.getFileName());
                 context.sendBroadcast(intent);
             }
@@ -364,7 +391,7 @@ public class ChatService {
         protected String doInBackground(String... params) {
             outgoingFileTransfer = fileTransferManager.createOutgoingFileTransfer(params[0] + "/" + RESOURCE);
             try {
-                outgoingFileTransfer.sendFile(new File(params[1]), "You won't believe this!");
+                outgoingFileTransfer.sendFile(new File(params[1]), params[2]);
                 while(!outgoingFileTransfer.isDone()) {
                     if(outgoingFileTransfer.getStatus().equals(FileTransfer.Status.error)) {
                         System.out.println("outgoingFileTransfer " + outgoingFileTransfer.getError());

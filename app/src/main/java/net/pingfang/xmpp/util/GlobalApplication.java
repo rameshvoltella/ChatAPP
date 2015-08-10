@@ -13,6 +13,11 @@ public class GlobalApplication extends Application {
 
     public static final String ACTION_INTENT_MESSAGE_INCOMING = "ACTION_INTENT_MESSAGE_INCOMING";
     public static final String ACTION_INTENT_IMAGE_INCOMING = "ACTION_INTENT_IMAGE_INCOMING";
+    public static final String ACTION_INTENT_VOICE_INCOMING = "ACTION_INTENT_VOICE_INCOMING";
+    public static final String ACTION_INTENT_VIDEO_INCOMING = "ACTION_INTENT_VIDEO_INCOMING";
+
+    public static final String VOICE_FILE_NAME_PREFIX = "VOICE_";
+    public static final String VOICE_FILE_NAME_SUFFIX = ".3gp";
 
     private Locale myLocale;
     SharedPreferencesHelper helper;
