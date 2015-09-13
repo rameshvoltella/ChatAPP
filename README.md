@@ -9,3 +9,6 @@ A simple chat client  based on XMPP protocol for android
 
 <b>注意:gradle.properties 文件中的代理是编译的时候代理服务器(也就是翻墙)用来下载相关包的</b>(2015-08-06)
 
+SASLAuthentication.unBlacklistSASLMechanism("PLAIN");
+SASLAuthentication.blacklistSASLMechanism("DIGEST-MD5");
+
